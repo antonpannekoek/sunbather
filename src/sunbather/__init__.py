@@ -33,7 +33,7 @@ def check_cloudy(quiet=False, cloudy_version="23.01"):
     )  # the absolute path where this code lives
     try:
         # the path where Cloudy is installed
-        cloudypath = os.environ["cloudy_path"]
+        cloudypath = os.environ["CLOUDY_PATH"]
     except KeyError:
         cloudypath = f"{sunbatherpath}/cloudy/c{cloudy_version}"
     if not os.path.exists(f"{cloudypath}/source/cloudy.exe"):
