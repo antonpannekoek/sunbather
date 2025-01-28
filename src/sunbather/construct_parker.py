@@ -751,7 +751,8 @@ def run(
     temp=None,
     sed_name="real",
     fraction_hydrogen=None,
-    zdict=None,
+    z=1.0,
+    zelem=None,
     mu_conv=0.01,
     mu_maxit=7,
     overwrite=False,
@@ -787,11 +788,15 @@ def run(
         composition. If None is given, Parker wind profiles will be calculated
         using the p-winds/Cloudy iterative method and the composition is
         specified via the zdict argument.
-    zdict : dict
-        Dictionary with the scale factors of all elements relative
-        to the default solar composition. Can be easily created with tools.get_zdict().
-        Will only be used if fH is None, in which case the p-winds/Cloudy
-        iterative method is applied.
+    z : float
+        Metallicity (=scale factor relative to solar for all elements except H
+        and He). Using this keyword results in running p_winds in an iterative
+        scheme where Cloudy updates the mu parameter.
+    zelem : dict
+        Abundance scale factor for specific elements, e.g. {"Fe": 10, "He": 0.01}.
+        Can also be used to toggle elements off, e.g. {"Ca": 0}.
+        Combines with "z" keyword. Using this results in running p_winds
+        in an iterative scheme where Cloudy updates the mu parameter.
     mu_conv : float
         Convergence threshold expressed as the relative change in mu_bar
         between iterations.  Will only be used if fH is None, in which case the
@@ -814,7 +819,7 @@ def run(
         al. (2024).  See also Appendix D of Vissapragada et al. (2022) for the
         p-winds implementation.
     """
-
+    zdict = tools.get_zdict(z=z, zelem=zelem)
     p = tools.Planet(plname)
     if sed_name != "real":
         p.set_var(SEDname=sed_name)
@@ -879,8 +884,8 @@ def run_models(
     sed_name="real",
     fraction_hydrogen=None,
     zdict=None,
-    mu_conv=None,
-    mu_maxit=None,
+    mu_conv=0.01,
+    mu_maxit=7,
     overwrite=False,
     verbose=False,
     avoid_pwinds_mubar=False,

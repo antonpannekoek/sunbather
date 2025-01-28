@@ -2749,7 +2749,7 @@ class Sim:
         # composition and altmax
         self.disabled_elements = []
         zelem = {}
-        _parker_T, _parker_mdot, _parker_dir = None, None, None  # temp variables
+        _parker_T, _parker_Mdot, _parker_dir = None, None, None  # temp variables
         with open(simname + ".in", "r", encoding="utf-8") as f:
             for line in f:
                 if (
@@ -2762,8 +2762,8 @@ class Sim:
                     # check if a Parker profile was defined
                     if "parker_T" in line:
                         _parker_T = int(line.split("=")[-1].strip("\n"))
-                    if "parker_mdot" in line:
-                        _parker_mdot = line.split("=")[-1].strip("\n")
+                    if "parker_Mdot" in line:
+                        _parker_Mdot = line.split("=")[-1].strip("\n")
                     if "parker_dir" in line:
                         _parker_dir = line.split("=")[-1].strip("\n")
 
@@ -2814,10 +2814,10 @@ class Sim:
         if (
             hasattr(self, "p")
             and (_parker_T is not None)
-            and (_parker_mdot is not None)
+            and (_parker_Mdot is not None)
             and (_parker_dir is not None)
         ):
-            self.par = Parker(self.p.name, _parker_T, _parker_mdot, _parker_dir)
+            self.par = Parker(self.p.name, _parker_T, _parker_Mdot, _parker_dir)
 
         # overwrite/set manually given Parker object
         if parker is not None:

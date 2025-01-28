@@ -574,16 +574,17 @@ def make_rates_plot(
     ax2.plot(altgrid, advheat / rho, color="red", linestyle="dotted")
     ax2.plot(altgrid, advcool / rho, color="blue", linestyle="dotted")
     ax2.set_yscale("log")
+    ymin = 0.1 * min(min(radheat/rho), min(radcool/rho))
+    ymax = 2 * max(
+            max(radheat/rho),
+            max(radcool/rho),
+            max(expcool/rho),
+            max(advheat/rho),
+            max(advcool/rho),
+        )
     ax2.set_ylim(
-        0.1 * min(radheat / rho, radcool / rho),
-        2
-        * max(
-            radheat / rho,
-            radcool / rho,
-            expcool / rho,
-            advheat / rho,
-            advcool / rho,
-        ),
+        ymin,
+        ymax,
     )
     ax2.set_ylabel("Rate [erg/s/g]")
     ax2.legend(
@@ -664,14 +665,14 @@ def make_converged_plot(
     ax2.plot(altgrid, advcool / rho, color="blue", linestyle="dotted")
     ax2.set_yscale("log")
     ax2.set_ylim(
-        0.1 * min(radheat / rho, radcool / rho),
+        0.1 * min(min(radheat / rho), min(radcool / rho)),
         2
         * max(
-            radheat / rho,
-            radcool / rho,
-            expcool / rho,
-            advheat / rho,
-            advcool / rho,
+            max(radheat / rho),
+            max(radcool / rho),
+            max(expcool / rho),
+            max(advheat / rho),
+            max(advcool / rho),
         ),
     )
     ax2.set_ylabel("Rate [erg/s/g]")

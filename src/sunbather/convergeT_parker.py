@@ -2,6 +2,7 @@
 ConvergeT_parker module of sunbather
 """
 import sys
+import random
 import multiprocessing
 from shutil import copyfile
 import time
@@ -74,9 +75,9 @@ def find_close_model(parentfolder, T, Mdot, tolT=2000, tolMdot=1.0):
     if not convergedfolders:  # then we default to constant starting value
         clconv = [None, None]
     else:  # find closest converged profile
-        dist = (
-            lambda x, y: (x[0] - y[0]) ** 2 + (2000 * (x[1] - y[1])) ** 2
-        )  # 1 order of magnitude Mdot is now 'equal weighted' to 2000K
+        def dist(x, y):
+            # 1 order of magnitude Mdot is now 'equal weighted' to 2000K
+            return (x[0] - y[0]) ** 2 + (2000 * (x[1] - y[1])) ** 2
         clconv = min(
             convergedfolders, key=lambda fol: dist(fol, [int(T), float(Mdot)])
         )  # closest converged [T, Mdot]
@@ -101,7 +102,7 @@ def run_s(
     pdir,
     zdict=None,
     altmax=8,
-    save_sp=None,
+    save_sp="all",
     constantT=False,
     maxit=16,
 ):
@@ -168,6 +169,8 @@ def run_s(
     """
     if save_sp is None:
         save_sp = []
+    elif save_sp == "all":
+        save_sp = tools.get_specieslist()
 
     Mdot = f"{float(Mdot):.3f}"  # enforce this format to get standard file names.
     T = str(T)
@@ -388,44 +391,72 @@ def run(
     overwrite=False,
     start_temp="nearby",
     pdir=None,
-    z=None,
+    z=1.0,
     zelem=None,
     altmax=8,
-    save_sp=None,
+    save_sp="all",
     constant_temp=False,
     maxit=20,
+    cores=None,
 ):
     if zelem is None:
         zelem = {}
     zdict = tools.get_zdict(z=z, zelem=zelem)
-    run_s(
-        plname,
-        mdot,
-        temp,
-        itno,
-        fc,
-        workingdir,
-        sedname,
-        overwrite,
-        start_temp,
-        pdir,
-        zdict=zdict,
-        altmax=altmax,
-        save_sp=save_sp,
-        constantT=constant_temp,
-        maxit=maxit,
-    )
+    if not isinstance(mdot, list) and not isinstance(mdot, np.ndarray):
+        mdot = np.array([mdot])
+    if not isinstance(temp, list) and not isinstance(temp, np.ndarray):
+        temp = np.array([temp])
+    if cores is None:
+        cores = multiprocessing.cpu_count()
+    with multiprocessing.Pool(processes=cores) as pool:
+        workers = []
+        for mdot_select in mdot:
+            for temp_select in temp:
+                args = (
+                    plname,
+                    mdot_select,
+                    temp_select,
+                    itno,
+                    fc,
+                    workingdir,
+                    sedname,
+                    overwrite,
+                    start_temp,
+                    pdir,
+                )
+                kwargs = {
+                    "zdict": zdict,
+                    "altmax": altmax,
+                    "save_sp": save_sp,
+                    "constantT": constant_temp,
+                    "maxit": maxit,
+                }
+                workers.append(
+                    pool.apply_async(
+                        catch_errors_run_s,
+                        args,
+                        kwargs,
+                    )
+                )
+        while workers:
+            worker = workers[random.randint(0, len(workers) - 1)]
+            try:
+                result = worker.get(timeout=0.1)
+                print(result)
+                workers.remove(worker)
+            except multiprocessing.TimeoutError:
+                continue
 
 
-def catch_errors_run_s(*args):
+def catch_errors_run_s(*args, **kwargs):
     """
     Executes the run_s() function with provided arguments, while catching
     errors more gracefully.
     """
 
     try:
-        run_s(*args)
-    except Exception as e:
+        run_s(*args, **kwargs)
+    except Exception:
         traceback.print_exc()
 
 

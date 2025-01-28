@@ -9,6 +9,14 @@ import sunbather.tools
 from sunbather.install_cloudy import GetCloudy
 
 
+__all__ = [
+    "sunbather",
+    "check_cloudy",
+    "firstrun",
+    "make_workingdir",
+]
+
+
 def check_cloudy(quiet=False, cloudy_version="23.01"):
     """
     Checks if Cloudy executable exists, and if not, prompts to download and build it.
