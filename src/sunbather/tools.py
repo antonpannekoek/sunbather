@@ -714,20 +714,21 @@ def process_energies(filename, rewrite=True, cloudy_version="23"):
 
     if (
         en.columns.values[0][0] == "#"
-    ):  # condition checks whether it has already been rewritten, if not, we do all following stuff:
-
+    ):
+        # condition checks whether it has already been rewritten, if not, we do
+        # all following stuff:
         for i, col in enumerate(en.columns):  # check if all rows are the same
-            if len(en.iloc[:, col].unique()) != 1:
+            if len(en.iloc[:, i].unique()) != 1:
                 raise ValueError(
                     "In reading .en file, found a column with not identical values!"
                     + " filename:",
                     filename,
                     "col:",
-                    col,
+                    i,
                     "colname:",
-                    en.columns[col],
+                    col,
                     "unique values:",
-                    en.iloc[:, col].unique(),
+                    en.iloc[:, i].unique(),
                 )
 
         en.rename(
