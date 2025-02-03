@@ -463,7 +463,7 @@ def read_NIST_lines(species, wavlower=None, wavupper=None):
     """
 
     spNIST = pd.read_table(
-        tools.sunbatherpath + "/RT_tables/" + species + "_lines_NIST.txt"
+        tools.SUNBATHERPATH + "/RT_tables/" + species + "_lines_NIST.txt"
     )  # line info
     # remove lines with nan fik or Aik values. Note that lineno doesn't change (uses index instead of rowno.)
     spNIST = spNIST[spNIST.fik.notna()]
