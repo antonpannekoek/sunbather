@@ -210,8 +210,7 @@ def get_specieslist(max_ion=6, exclude_elements=None):
     Returns
     -------
     specieslist : list
-        List of atomic and ionic species names in the string format expected by
-        Cloudy.
+        List of atomic and ionic species names in the string format expected by Cloudy.
     """
     if exclude_elements is None:
         exclude_elements = []
@@ -341,7 +340,7 @@ def process_continuum(filename, nonzero=False):
     return con_df
 
 
-def process_heating(filename, Rp=None, altmax=None, cloudy_version="17"):
+def process_heating(filename, Rp=None, altmax=None, cloudy_version="23"):
     """
     Reads a .heat file from the 'save heating' command.
     If Rp and altmax are given, it adds an altitude/radius scale.
@@ -356,7 +355,7 @@ def process_heating(filename, Rp=None, altmax=None, cloudy_version="17"):
     altmax : numeric, optional
         Maximum altitude of the simulation in units of planet radius, by default None
     cloudy_version : str, optional
-        Major Cloudy release version, by default "17"
+        Major Cloudy release version, by default "23"
 
     Returns
     -------
@@ -449,7 +448,7 @@ def process_heating(filename, Rp=None, altmax=None, cloudy_version="17"):
     return heat
 
 
-def process_cooling(filename, Rp=None, altmax=None, cloudy_version="17"):
+def process_cooling(filename, Rp=None, altmax=None, cloudy_version="23"):
     """
     Reads a .cool file from the 'save cooling' command.
     If Rp and altmax are given, it adds an altitude/radius scale.
@@ -464,7 +463,7 @@ def process_cooling(filename, Rp=None, altmax=None, cloudy_version="17"):
     altmax : numeric, optional
         Maximum altitude of the simulation in units of planet radius, by default None
     cloudy_version : str, optional
-        Major Cloudy release version, by default "17"
+        Major Cloudy release version, by default "23"
 
     Returns
     -------
@@ -674,7 +673,7 @@ def process_densities(filename, Rp=None, altmax=None):
     return den
 
 
-def process_energies(filename, rewrite=True, cloudy_version="17"):
+def process_energies(filename, rewrite=True, cloudy_version="23"):
     """
     Reads a '.en' file from the 'save species energies' command.
     This command must always be used alongside the 'save species densities' command,
@@ -696,7 +695,7 @@ def process_energies(filename, rewrite=True, cloudy_version="17"):
         but they should be the same at each depth. Retaining only the values of the
         first row in this way helps to compress file size. By default True.
     cloudy_version : str, optional
-        Major Cloudy release version, by default "17"
+        Major Cloudy release version, by default "23"
 
     Returns
     -------
@@ -1019,7 +1018,7 @@ def get_SED_norm_1AU(SEDname):
     return nuFnu, Ryd
 
 
-def speciesstring(specieslist, selected_levels=False, cloudy_version="17"):
+def speciesstring(specieslist, selected_levels=False, cloudy_version="23"):
     """
     Takes a list of species names and returns a long string with those species
     between quotes and [:] added (or [:maxlevel] if selected_levels=True),
@@ -1037,7 +1036,7 @@ def speciesstring(specieslist, selected_levels=False, cloudy_version="17"):
         will be included. If False, all energy levels of each species will be
         included, regardless of whether we can match them to NIST. By default False.
     cloudy_version : str, optional
-        Major Cloudy release version, by default "17"
+        Major Cloudy release version, by default "23"
 
     Returns
     -------
@@ -1711,7 +1710,7 @@ def copyadd_Cloudy_in(
     constant_temp=None,
     double_tau=False,
     hcfrac=None,
-    cloudy_version="17",
+    cloudy_version="23",
 ):
     """
     Makes a copy of a Cloudy input file and appends commands.
@@ -1773,7 +1772,7 @@ def copyadd_Cloudy_in(
         By default None, so that Cloudy's default of 0.05 is used.
     cloudy_version : str, optional
         Major Cloudy release version, used only in combination with the denspecies
-        argument, by default "17".
+        argument, by default "23".
     """
     if outfiles is None:
         outfiles = []
@@ -1912,7 +1911,7 @@ def write_Cloudy_in(
     zdict=None,
     hcfrac=None,
     comments=None,
-    cloudy_version="17",
+    cloudy_version="23",
 ):
     """
     Writes a Cloudy input file for simulating an exoplanet atmosphere.
@@ -1995,7 +1994,7 @@ def write_Cloudy_in(
         in the string, by default None
     cloudy_version : str, optional
         Major Cloudy release version, used only in combination with the denspecies
-        argument, by default "17".
+        argument, by default "23".
     """
     if outfiles is None:
         outfiles = [".ovr", ".cool"]
@@ -2158,7 +2157,7 @@ def write_Cloudy_in(
 
 
 def insertden_Cloudy_in(
-    simname, denspecies, selected_den_levels=True, rerun=False, cloudy_version="17"
+    simname, denspecies, selected_den_levels=True, rerun=False, cloudy_version="23"
 ):
     """
     Takes a Cloudy .in input file and adds extra species to the
@@ -2182,7 +2181,7 @@ def insertden_Cloudy_in(
     rerun : bool, optional
         Whether to run the new Cloudy input file, by default False
     cloudy_version : str, optional
-        Major Cloudy release version, by default "17".
+        Major Cloudy release version, by default "23".
 
     Raises
     ------
