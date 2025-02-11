@@ -140,16 +140,15 @@ def run_s(
         Either 'constant', 'free' or 'nearby'. Sets the initial
         temperature profile guessed/used for the first iteration.
         'constant' sets it equal to the parker wind isothermal value.
-        'free' lets Cloudy solve it, so you will get the radiative equilibrium
-        structure.  'nearby' looks in the workingdir folder for previously solved
-        Parker wind profiles and starts from a converged one. Then, if no
-        converged ones are available, uses 'free' instead.
+        'free' lets Cloudy solve it, so you will get the radiative equilibrium structure.
+        'nearby' looks in the dir folder for previously solved
+        Parker wind profiles and starts from a converged one. Then, if no converged
+        ones are available, uses 'free' instead.
     pdir : str
         Directory as $SUNBATHER_PROJECT_PATH/parker_profiles/planetname/*pdir*/
         where we take the isothermal parker wind density and velocity profiles from.
-        Different folders may exist there for a given planet, to separate for
-        example profiles with different assumptions such as stellar
-        SED/semi-major axis/composition.
+        Different folders may exist there for a given planet, to separate for example profiles
+        with different assumptions such as stellar SED/semi-major axis/composition.
     zdict : dict, optional
         Dictionary with the scale factors of all elements relative
         to the default solar composition. Can be easily created with tools.get_zdict().
@@ -378,6 +377,7 @@ def run_s(
 
     # with everything in order, run the actual temperature convergence scheme
     solveT.run_loop(path, itno, fc, save_sp, maxit)
+    return "Model done"
 
 
 def run(

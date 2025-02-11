@@ -77,7 +77,7 @@ def cloudy_spec_to_pwinds(SEDfilename, dist_SED, dist_planet):
         "flux_lambda": flux,
         "wavelength_unit": u.angstrom,
         "flux_unit": u.erg / u.s / u.cm**2 / u.angstrom,
-        "sed_name": SEDfilename.split("/")[-1][:-5],
+        "SEDname": SEDfilename.split("/")[-1][:-5],
     }  # SEDname added by me (without extension)
 
     return spectrum
@@ -497,7 +497,7 @@ def run_parker_with_cloudy(filename, temp, planet, zdict):
         double_tau=True,
         cosmic_rays=True,
         zdict=zdict,
-        constant_temp=temp,
+        constantT=temp,
         outfiles=[".ovr"],
     )
 
@@ -759,6 +759,66 @@ def run(
     verbose=False,
     avoid_pwinds_mubar=False,
     no_tidal=False,
+    cores=1,
+):
+    """
+    z : float
+        Metallicity (=scale factor relative to solar for all elements except H
+        and He). Using this keyword results in running p_winds in an iterative
+        scheme where Cloudy updates the mu parameter.
+    zelem : dict
+        Abundance scale factor for specific elements, e.g. {"Fe": 10, "He": 0.01}.
+        Can also be used to toggle elements off, e.g. {"Ca": 0}.
+        Combines with "z" keyword. Using this results in running p_winds
+        in an iterative scheme where Cloudy updates the mu parameter.
+    """
+    if mdot is None:
+        mdot = []
+    if temp is None:
+        temp = []
+    if fraction_hydrogen is None:
+        fraction_hydrogen = 0.0
+    zdict = tools.get_zdict(z=z, zelem=zelem)
+
+    pars = []
+    for mdot_i in mdot:
+        for temp_i in temp:
+            pars.append(
+                (
+                    plname,
+                    pdir,
+                    mdot_i,
+                    temp_i,
+                    sed_name,
+                    fraction_hydrogen,
+                    zdict,
+                    mu_conv,
+                    mu_maxit,
+                    overwrite,
+                    verbose,
+                    no_tidal,
+                )
+            )
+
+    with multiprocessing.Pool(cores) as p:
+        p.starmap(catch_errors_run_s, pars)
+        p.close()
+        p.join()
+
+
+def run_s(
+    plname,
+    pdir,
+    mdot,
+    temp,
+    sed_name,
+    fraction_hydrogen,
+    zdict,
+    mu_conv,
+    mu_maxit,
+    overwrite,
+    verbose,
+    no_tidal,
 ):
     """
     Calculates a single isothermal Parker wind profile.
@@ -788,15 +848,11 @@ def run(
         composition. If None is given, Parker wind profiles will be calculated
         using the p-winds/Cloudy iterative method and the composition is
         specified via the zdict argument.
-    z : float
-        Metallicity (=scale factor relative to solar for all elements except H
-        and He). Using this keyword results in running p_winds in an iterative
-        scheme where Cloudy updates the mu parameter.
-    zelem : dict
-        Abundance scale factor for specific elements, e.g. {"Fe": 10, "He": 0.01}.
-        Can also be used to toggle elements off, e.g. {"Ca": 0}.
-        Combines with "z" keyword. Using this results in running p_winds
-        in an iterative scheme where Cloudy updates the mu parameter.
+    zdict : dict
+        Dictionary with the scale factors of all elements relative
+        to the default solar composition. Can be easily created with tools.get_zdict().
+        Will only be used if fH is None, in which case the p-winds/Cloudy iterative method
+        is applied.
     mu_conv : float
         Convergence threshold expressed as the relative change in mu_bar
         between iterations.  Will only be used if fH is None, in which case the
@@ -808,18 +864,11 @@ def run(
         Whether to overwrite existing models.
     verbose : bool
         Whether to print diagnostics about the convergence of mu_bar.
-    avoid_pwinds_mubar : bool
-        Whether to avoid using p-winds to calculate mu_bar during the first iteration,
-        when using the p-winds/Cloudy iterative method. Will only be used if fH
-        is None.  If True, we guess the mu_bar of the first iteration based on
-        a completely neutral atmosphere. This can be helpful in cases where
-        p-winds solver cannot find a solution, but Cloudy typically can.
     no_tidal : bool
         Whether to neglect tidal gravity - fourth term of Eq. 4 of Linssen et
         al. (2024).  See also Appendix D of Vissapragada et al. (2022) for the
         p-winds implementation.
     """
-    zdict = tools.get_zdict(z=z, zelem=zelem)
     p = tools.Planet(plname)
     if sed_name != "real":
         p.set_var(SEDname=sed_name)
@@ -863,33 +912,37 @@ def run(
         )
 
 
-def catch_errors_run(*args):
+def catch_errors_run_s(*args):
     """
-    Executes the run() function with provided arguments, while catching
+    Executes the run_s() function with provided arguments, while catching
     errors more gracefully.
     """
 
     try:
-        run(*args)
+        run_s(*args)
     except Exception:
         traceback.print_exc()
 
 
-def run_models(
-    plname=None,
-    pdir=None,
-    cores=1,
-    mdot_list=None,
-    temp_list=None,
-    sed_name="real",
-    fraction_hydrogen=None,
-    zdict=None,
-    mu_conv=0.01,
-    mu_maxit=7,
-    overwrite=False,
-    verbose=False,
-    avoid_pwinds_mubar=False,
-    no_tidal=False,
+def run_g(
+    plname,
+    pdir,
+    cores,
+    mdot_l,
+    mdot_u,
+    mdot_s,
+    temp_l,
+    temp_u,
+    temp_s,
+    sed_name,
+    fraction_hydrogen,
+    zdict,
+    mu_conv,
+    mu_maxit,
+    overwrite,
+    verbose,
+    avoid_pwinds_mubar,
+    no_tidal,
 ):
     """
     Calculates a grid of isothermal Parker wind models, by executing the
@@ -908,10 +961,18 @@ def run_models(
         SED/semi-major axis/composition.
     cores : int
         Number of parallel processes to spawn (i.e., number of CPU cores).
-    mdot_list : list
-        The log10(mass-loss rate) grid in units of g s-1.
-    temp_list : list
-        The temperature grid in units of K.
+    mdot_l : str or numeric
+        Lower bound on the log10(mass-loss rate) grid in units of g s-1.
+    mdot_u : str or numeric
+        Upper bound on the log10(mass-loss rate) grid in units of g s-1.
+    mdot_s : str or numeric
+        Step size of the log10(mass-loss rate) grid in units of g s-1.
+    temp_l : str or numeric
+        Lower bound on the temperature grid in units of K.
+    temp_u : str or numeric
+        Upper bound on the temperature grid in units of K.
+    temp_s : str or numeric
+        Step size of the temperature grid in units of K.
     sed_name : str
         Name of SED file to use. If sed_name is 'real', we use the name as
         given in the planets.txt file, but if sed_name is something else,
@@ -952,8 +1013,10 @@ def run_models(
     """
 
     pars = []
-    for mdot in mdot_list:
-        for temp in temp_list:
+    for mdot in np.arange(
+        mdot_l, mdot_u + 1e-6, mdot_s
+    ):   # 1e-6 so that mdot_u is included
+        for temp in np.arange(int(temp_l), int(temp_u) + 1e-6, int(temp_s)).astype(int):
             pars.append(
                 (
                     plname,
