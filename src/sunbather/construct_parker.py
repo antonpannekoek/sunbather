@@ -750,7 +750,7 @@ def run(
     mdot=None,
     temp=None,
     sed_name="real",
-    fraction_hydrogen=None,
+    fraction_hydrogen=0.9,
     z=1.0,
     zelem=None,
     mu_conv=0.01,
@@ -776,8 +776,6 @@ def run(
         mdot = []
     if temp is None:
         temp = []
-    if fraction_hydrogen is None:
-        fraction_hydrogen = 0.0
     zdict = tools.get_zdict(z=z, zelem=zelem)
 
     pars = []
@@ -1274,12 +1272,16 @@ def main(**kwargs):
             f"{projectpath}/parker_profiles/{args.plname}/{args.pdir}/temp"
         )
 
-    mdot = np.arange(
-        args.mdot_lower, args.mdot_upper + 1e-6, args.mdot_step
-    )  # 1e-6 so that upper bound is inclusive
-    temp = np.arange(
-        args.temp_lower, args.temp_upper + 1e-6, args.temp_step
-    ).astype(int)
+    mdot = np.linspace(
+        args.mdot_lower,
+        args.mdot_upper,
+        1 + (args.mdot_upper - args.mdot_lower) // args.mdot_step
+    )
+    temp = np.linspace(
+        args.temp_lower,
+        args.temp_upper,
+        1 + (args.temp_upper - args.temp_lower) // args.temp_step
+    )
 
     run_models(
         args.plname,
