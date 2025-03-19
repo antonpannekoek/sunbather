@@ -774,8 +774,12 @@ def run(
     """
     if mdot is None:
         mdot = []
+    elif isinstance(mdot, (int, float)):
+        mdot = [mdot]
     if temp is None:
         temp = []
+    elif isinstance(temp, (int, float)):
+        temp = [temp]
     zdict = tools.get_zdict(z=z, zelem=zelem)
 
     pars = []
