@@ -46,4 +46,4 @@ html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
 # jupyter_execute_notebooks = "cache"
 
 # No notebook outputs
-jupyter_execute_notebooks = "off"
+# jupyter_execute_notebooks = "off"
