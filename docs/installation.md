@@ -34,7 +34,7 @@ import sunbather
 sunbather.firstrun()
 ```
 
-This will install `Cloudy` into the `sunbather` root directory. It will automatically set the path variable for you. It will also prompt you to enter a project directory. It then copies the template *planets.txt* file supplied by `sunbather` into your project directory. It then also copies the SED files into the `Cloudy` directory.
+This will ask you to install `Cloudy` into the `sunbather` root directory. It will automatically set the path variable for you. It will also prompt you to enter a project directory. It then copies the template *planets.txt* file supplied by `sunbather` into your project directory. It then also copies the SED files into the `Cloudy` directory.
 
 #### Option 2: If you already have a `Cloudy` installation:
 The path to the `Cloudy` installation must be set as the `$CLOUDY_PATH` environmental variable, and if you are using version 17.02 instead of 23.01, you should also set the `$CLOUDY_VERSION` environmental variable to `"17.02"`. Your project directory must be stored in the `$SUNBATHER_PROJECT_PATH` environmental variable. The easiest solution is to add these variables to your `~/.bashrc` or `~/.zsh` file:

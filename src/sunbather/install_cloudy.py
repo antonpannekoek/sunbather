@@ -37,9 +37,9 @@ class GetCloudy:
                 return
         os.chdir(self.cloudypath)
         try:
-            with urllib.request.urlopen(f"{self.url}{self.filename}") as g:
-                with open(self.filename, "b+w") as f:
-                    f.write(g.read())
+            print(f"Downloading {self.url}{self.filename}...")
+            urllib.request.urlretrieve(f"{self.url}{self.filename}", self.filename)
+            print("...done!")
         except HTTPError:
             print(f"Could not download Cloudy from {self.url}{self.filename}...")
             return

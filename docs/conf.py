@@ -41,3 +41,9 @@ html_static_path = ["_static"]
 
 # Configuration for Read the Docs
 html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
+
+# Cache notebook outputs
+# jupyter_execute_notebooks = "cache"
+
+# No notebook outputs
+jupyter_execute_notebooks = "off"

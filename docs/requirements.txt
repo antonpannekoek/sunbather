@@ -6,27 +6,48 @@
 #
 alabaster==0.7.16
     # via sphinx
+appnope==0.1.4
+    # via ipykernel
 astropy==6.1.6
     # via
     #   p-winds
     #   sunbather (../pyproject.toml)
 astropy-iers-data==0.2024.11.18.0.35.2
     # via astropy
+asttokens==3.0.0
+    # via stack-data
+attrs==25.3.0
+    # via
+    #   jsonschema
+    #   jupyter-cache
+    #   referencing
 babel==2.16.0
     # via sphinx
 certifi==2024.8.30
     # via requests
 charset-normalizer==3.4.0
     # via requests
+click==8.1.8
+    # via jupyter-cache
+comm==0.2.2
+    # via ipykernel
 contourpy==1.3.1
     # via matplotlib
 cycler==0.12.1
     # via matplotlib
+debugpy==1.8.13
+    # via ipykernel
+decorator==5.2.1
+    # via ipython
 docutils==0.20.1
     # via
     #   myst-parser
     #   sphinx
     #   sphinx-rtd-theme
+executing==2.2.0
+    # via stack-data
+fastjsonschema==2.21.1
+    # via nbformat
 flatstar==0.2.1a0
     # via p-winds
 fonttools==4.55.0
@@ -35,10 +56,40 @@ idna==3.10
     # via requests
 imagesize==1.4.1
     # via sphinx
+importlib-metadata==8.6.1
+    # via
+    #   jupyter-cache
+    #   myst-nb
+ipykernel==6.29.5
+    # via myst-nb
+ipython==9.0.2
+    # via
+    #   ipykernel
+    #   myst-nb
+ipython-pygments-lexers==1.1.1
+    # via ipython
+jedi==0.19.2
+    # via ipython
 jinja2==3.1.4
     # via
     #   myst-parser
     #   sphinx
+jsonschema==4.23.0
+    # via nbformat
+jsonschema-specifications==2024.10.1
+    # via jsonschema
+jupyter-cache==1.0.1
+    # via myst-nb
+jupyter-client==8.6.3
+    # via
+    #   ipykernel
+    #   nbclient
+jupyter-core==5.7.2
+    # via
+    #   ipykernel
+    #   jupyter-client
+    #   nbclient
+    #   nbformat
 kiwisolver==1.4.7
     # via matplotlib
 markdown-it-py==3.0.0
@@ -49,12 +100,31 @@ markupsafe==3.0.2
     # via jinja2
 matplotlib==3.9.2
     # via sunbather (../pyproject.toml)
+matplotlib-inline==0.1.7
+    # via
+    #   ipykernel
+    #   ipython
 mdit-py-plugins==0.4.2
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
-myst-parser==4.0.0
+myst-nb==1.2.0
     # via -r requirements.in
+myst-parser==4.0.1
+    # via
+    #   -r requirements.in
+    #   myst-nb
+nbclient==0.10.2
+    # via
+    #   jupyter-cache
+    #   myst-nb
+nbformat==5.10.4
+    # via
+    #   jupyter-cache
+    #   myst-nb
+    #   nbclient
+nest-asyncio==1.6.0
+    # via ipykernel
 numpy==2.1.3
     # via
     #   astropy
@@ -71,22 +141,41 @@ p-winds==1.4.7
 packaging==24.2
     # via
     #   astropy
+    #   ipykernel
     #   matplotlib
     #   sphinx
 pandas==2.2.3
     # via sunbather (../pyproject.toml)
+parso==0.8.4
+    # via jedi
+pexpect==4.9.0
+    # via ipython
 pillow==11.0.0
     # via
     #   flatstar
     #   matplotlib
+platformdirs==4.3.7
+    # via jupyter-core
+prompt-toolkit==3.0.50
+    # via ipython
+psutil==7.0.0
+    # via ipykernel
+ptyprocess==0.7.0
+    # via pexpect
+pure-eval==0.2.3
+    # via stack-data
 pyerfa==2.0.1.5
     # via astropy
 pygments==2.18.0
-    # via sphinx
+    # via
+    #   ipython
+    #   ipython-pygments-lexers
+    #   sphinx
 pyparsing==3.2.0
     # via matplotlib
 python-dateutil==2.9.0.post0
     # via
+    #   jupyter-client
     #   matplotlib
     #   pandas
 pytz==2024.2
@@ -94,9 +183,25 @@ pytz==2024.2
 pyyaml==6.0.2
     # via
     #   astropy
+    #   jupyter-cache
+    #   myst-nb
     #   myst-parser
+pyzmq==26.3.0
+    # via
+    #   ipykernel
+    #   jupyter-client
+referencing==0.36.2
+    # via
+    #   jsonschema
+    #   jsonschema-specifications
 requests==2.32.3
     # via sphinx
+roman-numerals-py==3.1.0
+    # via sphinx
+rpds-py==0.23.1
+    # via
+    #   jsonschema
+    #   referencing
 scipy==1.13.1
     # via
     #   p-winds
@@ -105,9 +210,10 @@ six==1.16.0
     # via python-dateutil
 snowballstemmer==2.2.0
     # via sphinx
-sphinx==7.1.2
+sphinx==8.2.3
     # via
     #   -r requirements.in
+    #   myst-nb
     #   myst-parser
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery
@@ -127,7 +233,36 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
+sqlalchemy==2.0.39
+    # via jupyter-cache
+stack-data==0.6.3
+    # via ipython
+tabulate==0.9.0
+    # via jupyter-cache
+tornado==6.4.2
+    # via
+    #   ipykernel
+    #   jupyter-client
+traitlets==5.14.3
+    # via
+    #   comm
+    #   ipykernel
+    #   ipython
+    #   jupyter-client
+    #   jupyter-core
+    #   matplotlib-inline
+    #   nbclient
+    #   nbformat
+typing-extensions==4.12.2
+    # via
+    #   myst-nb
+    #   referencing
+    #   sqlalchemy
 tzdata==2024.2
     # via pandas
 urllib3==2.2.3
     # via requests
+wcwidth==0.2.13
+    # via prompt-toolkit
+zipp==3.21.0
+    # via importlib-metadata
