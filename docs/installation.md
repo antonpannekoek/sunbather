@@ -4,13 +4,11 @@ You can install `sunbather` via `pip`, or compile it from source.
 
 ### Option 1: Installation with pip
 
-Simply run the following command:
+We recommend installing `sunbather` in a [virtual environment](https://realpython.com/python-virtual-environments-a-primer/). Simply run the following command:
 
 ```bash
 pip install sunbather
 ```
-
-This will automatically check for the dependencies and request to install the missing ones. We recommend installing `sunbather` in a [virtual environment](https://realpython.com/python-virtual-environments-a-primer/).
 
 ### Option 2: compilation from source
 
@@ -20,7 +18,12 @@ Clone `sunbather` from Github using the following command:
 git clone https://github.com/antonpannekoek/sunbather.git
 ```
 
-...
+Then install the package. We recommend installing `sunbather` in a [virtual environment](https://realpython.com/python-virtual-environments-a-primer/).
+
+```bash
+cd sunbather
+pip install .
+```
 
 ## Post-installation steps
 
