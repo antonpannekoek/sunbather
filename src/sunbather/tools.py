@@ -103,8 +103,8 @@ def read_planets_file():
 # define constants:
 # c = 2.99792458e10  # cm/s
 c = astropy.constants.c.to("cm/s").value
-# h = 4.135667696e-15  # eV s, used to plot wavelengths in keV units
-h = astropy.constants.h.to("eV*s").value
+# h = 6.626196e-27  # erg s
+h = astropy.constants.h.to("erg*s").value
 # mH = 1.674e-24  # g  - intended: atomic mass unit
 mH = (1 * astropy.units.u).to("g").value
 # k = 1.381e-16  # erg/K
