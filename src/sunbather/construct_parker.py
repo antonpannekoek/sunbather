@@ -750,8 +750,8 @@ def run(
     mdot=None,
     temp=None,
     sed_name="real",
-    fraction_hydrogen=0.9,
-    z=1.0,
+    fraction_hydrogen=None,
+    z=None,
     zelem=None,
     mu_conv=0.01,
     mu_maxit=7,
@@ -786,9 +786,7 @@ def run(
     fraction_hydrogen : float or None
         Hydrogen abundance expressed as a fraction of the total. If a value is given,
         Parker wind profiles will be calculated using p-winds standalone with a H/He
-        composition. If None is given, Parker wind profiles will be calculated
-        using the p-winds/Cloudy iterative method and the composition is
-        specified via the zdict argument.
+        composition.
     z : float
         Metallicity (=scale factor relative to solar for all elements except H
         and He). Using this keyword results in running p_winds in an iterative
@@ -831,6 +829,11 @@ def run(
         temp = []
     elif isinstance(temp, (int, float)):
         temp = [temp]
+    
+    if (fraction_hydrogen is None) == (z is None):
+        raise ValueError("Exactly one of `fraction_hydrogen` or `z` must be given to " \
+                         "specify the atmospheric composition, not both and not neither.")
+    # if fraction_hydrogen is given, the following zdict will simply not be used by run_s()
     zdict = tools.get_zdict(z=z, zelem=zelem)
 
     pars = []
