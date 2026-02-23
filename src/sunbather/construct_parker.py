@@ -762,6 +762,33 @@ def run(
     cores=1,
 ):
     """
+    Calculates isothermal Parker wind models.
+
+    Parameters
+    ----------
+    plname : str
+        Planet name (must have parameters stored in
+        $SUNBATHER_PROJECT_PATH/planets.txt).
+    pdir : str
+        Directory as $SUNBATHER_PROJECT_PATH/parker_profiles/*plname*/*pdir*/
+        where the isothermal parker wind density and velocity profiles are saved.
+        Different folders may exist there for a given planet, to separate for
+        example profiles with different assumptions such as stellar
+        SED/semi-major axis/composition.
+    mdot : numeric, list, or numpy array
+        log of the mass-loss rate in units of g s-1.
+    temp : numeric, list, or numpy array
+        Temperature in units of K.
+    sed_name : str
+        Name of SED file to use. If sed_name is 'real', we use the name as
+        given in the planets.txt file, but if sed_name is something else,
+        we advice to use a separate pdir folder for this.
+    fraction_hydrogen : float or None
+        Hydrogen abundance expressed as a fraction of the total. If a value is given,
+        Parker wind profiles will be calculated using p-winds standalone with a H/He
+        composition. If None is given, Parker wind profiles will be calculated
+        using the p-winds/Cloudy iterative method and the composition is
+        specified via the zdict argument.
     z : float
         Metallicity (=scale factor relative to solar for all elements except H
         and He). Using this keyword results in running p_winds in an iterative
@@ -771,6 +798,30 @@ def run(
         Can also be used to toggle elements off, e.g. {"Ca": 0}.
         Combines with "z" keyword. Using this results in running p_winds
         in an iterative scheme where Cloudy updates the mu parameter.
+    mu_conv : float
+        Convergence threshold expressed as the relative change in mu_bar
+        between iterations.  Will only be used if fraction_hydrogen is None, in
+        which case the p-winds/Cloudy iterative method is applied.
+    mu_maxit : int
+        Maximum number of iterations for the p-winds/Cloudy iterative method. Will only
+        be used if fraction_hydrogen is None.
+    overwrite : bool
+        Whether to overwrite existing models.
+    verbose : bool
+        Whether to print diagnostics about the convergence of mu_bar.
+    avoid_pwinds_mubar : bool
+        Whether to avoid using p-winds to calculate mu_bar during the first iteration,
+        when using the p-winds/Cloudy iterative method. Will only be used if
+        fraction_hydrogen is None.
+        If True, we guess the mu_bar of the first iteration based on a
+        completely neutral atmosphere. This can be helpful in cases where
+        p-winds solver cannot find a solution, but Cloudy typically can.
+    no_tidal : bool
+        Whether to neglect tidal gravity - fourth term of Eq. 4 of Linssen et
+        al. (2024).  See also Appendix D of Vissapragada et al. (2022) for the
+        p-winds implementation.
+    cores : int
+        Number of parallel processes to spawn (i.e., number of CPU cores).
     """
     if mdot is None:
         mdot = []
@@ -798,6 +849,7 @@ def run(
                     mu_maxit,
                     overwrite,
                     verbose,
+                    avoid_pwinds_mubar,
                     no_tidal,
                 )
             )
@@ -820,6 +872,7 @@ def run_s(
     mu_maxit,
     overwrite,
     verbose,
+    avoid_pwinds_mubar,
     no_tidal,
 ):
     """
@@ -866,6 +919,11 @@ def run_s(
         Whether to overwrite existing models.
     verbose : bool
         Whether to print diagnostics about the convergence of mu_bar.
+    avoid_pwinds_mubar : bool
+        Whether to avoid using p-winds to calculate mu_bar during the first
+        iteration.  If True, we guess the mu_bar of the first iteration based
+        on a completely neutral atmosphere. This can be helpful in cases where
+        p-winds solver cannot find a solution, but Cloudy typically can.
     no_tidal : bool
         Whether to neglect tidal gravity - fourth term of Eq. 4 of Linssen et
         al. (2024).  See also Appendix D of Vissapragada et al. (2022) for the
@@ -948,7 +1006,7 @@ def run_g(
 ):
     """
     Calculates a grid of isothermal Parker wind models, by executing the
-    run() function in parallel.
+    run_s() function in parallel.
 
     Parameters
     ----------
@@ -1038,7 +1096,7 @@ def run_g(
             )
 
     with multiprocessing.Pool(cores) as p:
-        p.starmap(catch_errors_run, pars)
+        p.starmap(catch_errors_run_s, pars)
         p.close()
         p.join()
 
@@ -1287,7 +1345,7 @@ def main(**kwargs):
         1 + (args.temp_upper - args.temp_lower) // args.temp_step
     )
 
-    run_models(
+    run(
         args.plname,
         args.pdir,
         args.cores,
