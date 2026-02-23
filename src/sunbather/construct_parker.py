@@ -497,7 +497,7 @@ def run_parker_with_cloudy(filename, temp, planet, zdict):
         double_tau=True,
         cosmic_rays=True,
         zdict=zdict,
-        constantT=temp,
+        constant_temp=temp,
         outfiles=[".ovr"],
     )
 

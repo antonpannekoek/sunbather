@@ -262,7 +262,7 @@ def run_s(
                 cosmic_rays=True,
                 zdict=zdict,
                 comments=comments,
-                constantT=T,
+                constant_temp=T,
             )
         else:
             tools.write_Cloudy_in(
@@ -280,7 +280,7 @@ def run_s(
                 cosmic_rays=True,
                 zdict=zdict,
                 comments=comments,
-                constantT=T,
+                constant_temp=T,
                 outfiles=[".den", ".en"],
                 denspecies=save_sp,
                 selected_den_levels=True,
@@ -345,7 +345,7 @@ def run_s(
             pathTstruc, T, Mdot
         )  # find if there are any nearby models we can start from
         if startT == "constant":  # then we start with the isothermal value
-            tools.copyadd_Cloudy_in(path + "template", path + "iteration1", constantT=T)
+            tools.copyadd_Cloudy_in(path + "template", path + "iteration1", constant_temp=T)
 
         elif (
             clconv == [None, None] or startT == "free"
