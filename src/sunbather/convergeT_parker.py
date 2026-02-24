@@ -399,15 +399,117 @@ def run(
     maxit=20,
     cores=None,
 ):
+    """
+    Solves for nonisothermal temperature profiles for one or more isothermal
+    Parker wind (density and velocity) profiles.
+
+    Parameters
+    ----------
+    plname : str
+        Planet name (must have parameters stored in
+        $SUNBATHER_PROJECT_PATH/planets.txt).
+    mdot : numeric, list, or numpy array
+        log10 of the mass-loss rate(s) in units of g s-1.
+    temp : numeric, list, or numpy array
+        Isothermal temperature(s) of the Parker wind profile(s) in units of K.
+    itno : int
+        Iteration number to start from (can only be different from 1
+        if this same model has been ran before, and then also
+        overwrite = True needs to be set). If value is 0, will automatically
+        look for the highest iteration number to start from.
+    fc : numeric
+        H/C convergence factor, see Linssen et al. (2024). A sensible value is 1.1.
+    workingdir : str
+        Directory as $SUNBATHER_PROJECT_PATH/sims/1D/planetname/*workingdir*/
+        where the temperature profile will be solved. A folder named
+        parker_*T*_*Mdot*/ will be made there.
+    sedname : str
+        Name of SED file to use. If sedname='real', we use the name as
+        given in the planets.txt file, but if sedname is something else,
+        we advice to use a separate dir folder for this.
+    overwrite : bool
+        Whether to overwrite if this simulation already exists.
+    start_temp : str
+        Either 'constant', 'free' or 'nearby'. Sets the initial
+        temperature profile guessed/used for the first iteration.
+        'constant' sets it equal to the parker wind isothermal value.
+        'free' lets Cloudy solve it, so you will get the radiative equilibrium structure.
+        'nearby' looks in the workingdir folder for previously solved
+        Parker wind profiles and starts from a converged one. Then, if no converged
+        ones are available, uses 'free' instead.
+    pdir : str
+        Directory as $SUNBATHER_PROJECT_PATH/parker_profiles/planetname/*pdir*/
+        where we take the isothermal parker wind density and velocity profiles from.
+        Different folders may exist there for a given planet, to separate for example profiles
+        with different assumptions such as stellar SED/semi-major axis/composition.
+    z : float
+        Metallicity (=scale factor relative to solar for all elements except H
+        and He).
+    zelem : dict
+        Abundance scale factor for specific elements, e.g. {"Fe": 10, "He": 0.01}.
+        Can also be used to toggle elements off, e.g. {"Ca": 0}.
+        Combines with "z" keyword. Beware that this is multiplicative!
+    altmax : int
+        Maximum altitude of the simulation in units of planet radius, by default 8.
+    save_sp : list or str
+        A list of atomic/ionic species to let Cloudy save the number density profiles
+        for. Those are needed when doing radiative transfer to produce
+        transmission spectra. For example, to be able to make
+        metastable helium spectra, 'He' needs to be in the save_sp list. Passing
+        'all' includes all species that weren't turned off.
+    constant_temp : bool
+        If True, instead of solving for a nonisothermal temperature profile,
+        the Parker wind profile is ran at the isothermal value. By default False.
+    maxit : int
+        Maximum number of iterations, by default 20.
+    cores : int or None
+        Number of parallel workers to spawn. If None, defaults to the number of CPU
+        cores as given by multiprocessing.cpu_count().
+        Note that on most platforms the multiprocessing method uses 'spawn', 
+        and this generally requires the run() call to be in a main block:
+            if __name__ == '__main__':
+                ...
+    """
     if zelem is None:
         zelem = {}
+
+    if mdot is None:
+        mdot = []
+    elif isinstance(mdot, (int, float, str)):
+        mdot = [mdot]
+    if temp is None:
+        temp = []
+    elif isinstance(temp, (int, float, str)):
+        temp = [temp]
+
     zdict = tools.get_zdict(z=z, zelem=zelem)
-    if not isinstance(mdot, list) and not isinstance(mdot, np.ndarray):
-        mdot = np.array([mdot])
-    if not isinstance(temp, list) and not isinstance(temp, np.ndarray):
-        temp = np.array([temp])
+
     if cores is None:
         cores = multiprocessing.cpu_count()
+
+    # don't use a pool for a single core
+    if int(cores) <= 1:
+        for mdot_select in mdot:
+            for temp_select in temp:
+                catch_errors_run_s(
+                    plname,
+                    mdot_select,
+                    temp_select,
+                    itno,
+                    fc,
+                    workingdir,
+                    sedname,
+                    overwrite,
+                    start_temp,
+                    pdir,
+                    zdict=zdict,
+                    altmax=altmax,
+                    save_sp=save_sp,
+                    constantT=constant_temp,
+                    maxit=maxit,
+                )
+        return
+
     with multiprocessing.Pool(processes=cores) as pool:
         workers = []
         for mdot_select in mdot:
@@ -794,9 +896,9 @@ def main(**kwargs):
     if not os.path.isdir(projectpath + "/sims/1D/" + args.plname + "/"):
         os.mkdir(projectpath + "/sims/1D/" + args.plname)
     if not os.path.isdir(
-        projectpath + "/sims/1D/" + args.plname + "/" + args.dir + "/"
+        projectpath + "/sims/1D/" + args.plname + "/" + args.workingdir + "/"
     ):
-        os.mkdir(projectpath + "/sims/1D/" + args.plname + "/" + args.dir)
+        os.mkdir(projectpath + "/sims/1D/" + args.plname + "/" + args.workingdir)
 
     if len(args.T) == 1 and len(args.Mdot) == 1:  # then we run a single model
         run_s(
@@ -897,4 +999,4 @@ def main(**kwargs):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()

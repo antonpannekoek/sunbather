@@ -794,8 +794,9 @@ def run(
     zelem : dict
         Abundance scale factor for specific elements, e.g. {"Fe": 10, "He": 0.01}.
         Can also be used to toggle elements off, e.g. {"Ca": 0}.
-        Combines with "z" keyword. Using this results in running p_winds
-        in an iterative scheme where Cloudy updates the mu parameter.
+        Combines with "z" keyword. Beware that this is multiplicative!
+        Using this results in running p_winds in an iterative scheme where Cloudy
+        updates the mu parameter.
     mu_conv : float
         Convergence threshold expressed as the relative change in mu_bar
         between iterations.  Will only be used if fraction_hydrogen is None, in
@@ -820,6 +821,10 @@ def run(
         p-winds implementation.
     cores : int
         Number of parallel processes to spawn (i.e., number of CPU cores).
+        Note that on most platforms the multiprocessing method uses 'spawn', 
+        and this generally requires the run() call to be in a main block:
+            if __name__ == '__main__':
+                ...
     """
     if mdot is None:
         mdot = []
@@ -857,6 +862,12 @@ def run(
                 )
             )
 
+    # don't use a pool for a single core
+    if int(cores) <= 1:
+        for args in pars:
+            catch_errors_run_s(*args)
+        return
+    
     with multiprocessing.Pool(cores) as p:
         p.starmap(catch_errors_run_s, pars)
         p.close()
@@ -1224,6 +1235,7 @@ def new_argument_parser():
     composition_group.add_argument(
         "-z",
         "--metallicity",
+        dest="z",
         type=float,
         help=(
             "metallicity (=scale factor relative to solar for all elements except H "
@@ -1299,11 +1311,6 @@ def main(**kwargs):
     else:
         args = kwargs
 
-    if args.z is not None:
-        zdict = tools.get_zdict(z=args.z, zelem=args.zelem)
-    else:  # if z==None we should not pass that to the tools.get_zdict function
-        zdict = tools.get_zdict(zelem=args.zelem)
-
     if args.fraction_hydrogen is not None and (
         args.zelem != {}
         or args.mu_conv != 0.01
@@ -1349,20 +1356,21 @@ def main(**kwargs):
     )
 
     run(
-        args.plname,
-        args.pdir,
-        args.cores,
-        mdot,
-        temp,
-        args.sed_name,
-        args.fraction_hydrogen,
-        zdict,
-        args.mu_conv,
-        args.mu_maxit,
-        args.overwrite,
-        args.verbose,
-        args.avoid_pwinds_mubar,
-        args.no_tidal,
+        plname=args.plname,
+        pdir=args.pdir,
+        mdot=mdot,
+        temp=temp,
+        sed_name=args.sed_name,
+        fraction_hydrogen=args.fraction_hydrogen,
+        z=args.z,
+        zelem=args.zelem,
+        mu_conv=args.mu_conv,
+        mu_maxit=args.mu_maxit,
+        overwrite=args.overwrite,
+        verbose=args.verbose,
+        avoid_pwinds_mubar=args.avoid_pwinds_mubar,
+        no_tidal=args.no_tidal,
+        cores=args.cores,
     )
 
     print(
