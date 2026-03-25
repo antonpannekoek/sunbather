@@ -52,3 +52,29 @@ def test_seds():
         "Please copy /sunbather/stellar_SEDs/eps_Eri_binned.spec "
         "into $CLOUDY_PATH/data/SED/"
     )
+
+
+def test_process_save_sp_excludes_turned_off_elements():
+    """
+    Species whose parent element is turned off should not be saved.
+    """
+    from sunbather import tools, convergeT_parker
+
+    zdict = tools.get_zdict(z=0.0)
+    save_sp = convergeT_parker.process_save_sp(["H", "He", "Li", "Li+", "Mg+2"], zdict)
+
+    assert save_sp == ["H", "He"]
+
+
+def test_process_save_sp_all_excludes_zero_abundance_elements():
+    """
+    Passing save_sp='all' should skip elements with zero abundance.
+    """
+    from sunbather import tools, convergeT_parker
+
+    zdict = tools.get_zdict(z=1.0, zelem={"Li": 0.0})
+    save_sp = convergeT_parker.process_save_sp("all", zdict, max_ion=2)
+
+    assert "Li" not in save_sp
+    assert "Li+" not in save_sp
+    assert "He" in save_sp

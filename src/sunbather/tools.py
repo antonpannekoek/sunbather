@@ -1656,7 +1656,7 @@ def run_Cloudy(filename, folder=None):
     if filename.endswith(".in"):
         filename = filename[:-3]  # filename should not contain the extension
 
-    os.system(f"cd {folder} && {get_cloudy_path()}/source/cloudy.exe -p {filename}")
+    os.system(f'cd "{folder}" && "{get_cloudy_path()}/source/cloudy.exe" -p "{filename}"')
 
 
 def remove_duplicates(law, fmt):
