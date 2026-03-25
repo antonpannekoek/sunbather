@@ -89,6 +89,44 @@ def find_close_model(parentfolder, T, Mdot, tolT=2000, tolMdot=1.0):
     return clconv
 
 
+def process_save_sp(save_sp, zdict, max_ion=6):
+    """
+    Removes turned-off elements from the requested Cloudy save species list.
+
+    Parameters
+    ----------
+    save_sp : list or str or None
+        Requested species to save. Passing "all" includes all available species.
+    zdict : dict
+        Dictionary with the scale factors of all elements relative to solar.
+    max_ion : int, optional
+        Maximum ionization degree when save_sp="all", by default 6.
+
+    Returns
+    -------
+    list
+        Requested species list without species whose parent element is turned off.
+    """
+    if zdict is None:
+        zdict = {}
+
+    if save_sp is None:
+        save_sp = []
+    elif save_sp == "all" or (
+        isinstance(save_sp, list) and "all" in save_sp
+    ):
+        save_sp = tools.get_specieslist(
+            exclude_elements=[element for element, zval in zdict.items() if zval == 0.0],
+            max_ion=max_ion,
+        )
+    else:
+        save_sp = [
+            sp for sp in save_sp if zdict.get(sp.split("+")[0], 1.0) != 0.0
+        ]
+
+    return save_sp
+
+
 def run_s(
     plname,
     Mdot,
@@ -159,17 +197,15 @@ def run_s(
         A list of atomic/ionic species to let Cloudy save the number density profiles
         for. Those are needed when doing radiative transfer to produce
         transmission spectra. For example, to be able to make
-        metastable helium spectra, 'He' needs to be in the save_sp list. By default [].
+        metastable helium spectra, 'He' needs to be in the save_sp list. By default all
+        species with non-zero abundance are saved.
     constantT : bool, optional
         If True, instead of sovling for a nonisothermal temperature profile,
         the Parker wind profile is ran at the isothermal value. By default False.
     maxit : int, optional
         Maximum number of iterations, by default 16.
     """
-    if save_sp is None:
-        save_sp = []
-    elif save_sp == "all":
-        save_sp = tools.get_specieslist()
+    save_sp = process_save_sp(save_sp, zdict)
 
     Mdot = f"{float(Mdot):.3f}"  # enforce this format to get standard file names.
     T = str(T)
@@ -881,11 +917,7 @@ def main(**kwargs):
 
     zdict = tools.get_zdict(z=args.z, zelem=args.zelem)
 
-    if "all" in args.save_sp:
-        args.save_sp = tools.get_specieslist(
-            exclude_elements=[sp for sp, zval in zdict.items() if zval == 0.0],
-            max_ion=args.save_sp_max_ion,
-        )
+    args.save_sp = process_save_sp(args.save_sp, zdict, max_ion=args.save_sp_max_ion)
 
     # set up the folder structure if it doesn't exist yet
     projectpath = tools.get_sunbather_project_path()
