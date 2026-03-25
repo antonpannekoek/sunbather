@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sunbather"
-version = "1.0.0"
+version = "1.1.0"
 # dynamic = ["version"]
 dependencies = [
   "numpy >= 1.24.3, <3",
@@ -16,7 +16,7 @@ dependencies = [
 ]
 requires-python = ">= 3.9"
 authors = [
-  {name = "Dion Linssen", email = "d.c.linssen@uva.nl"},
+  {name = "Dion Linssen", email = "dionlinssen@hotmail.com"},
   {name = "Antonija Oklopčić", email = "a.oklopcic@uva.nl"},
   {name = "Steven Rieder", email = "s.rieder@uva.nl"},
 ]

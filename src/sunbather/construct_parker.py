@@ -497,7 +497,7 @@ def run_parker_with_cloudy(filename, temp, planet, zdict):
         double_tau=True,
         cosmic_rays=True,
         zdict=zdict,
-        constantT=temp,
+        constant_temp=temp,
         outfiles=[".ovr"],
     )
 
@@ -750,8 +750,8 @@ def run(
     mdot=None,
     temp=None,
     sed_name="real",
-    fraction_hydrogen=0.9,
-    z=1.0,
+    fraction_hydrogen=None,
+    z=None,
     zelem=None,
     mu_conv=0.01,
     mu_maxit=7,
@@ -762,6 +762,31 @@ def run(
     cores=1,
 ):
     """
+    Calculates isothermal Parker wind models.
+
+    Parameters
+    ----------
+    plname : str
+        Planet name (must have parameters stored in
+        $SUNBATHER_PROJECT_PATH/planets.txt).
+    pdir : str
+        Directory as $SUNBATHER_PROJECT_PATH/parker_profiles/*plname*/*pdir*/
+        where the isothermal parker wind density and velocity profiles are saved.
+        Different folders may exist there for a given planet, to separate for
+        example profiles with different assumptions such as stellar
+        SED/semi-major axis/composition.
+    mdot : numeric, list, or numpy array
+        log of the mass-loss rate in units of g s-1.
+    temp : numeric, list, or numpy array
+        Temperature in units of K.
+    sed_name : str
+        Name of SED file to use. If sed_name is 'real', we use the name as
+        given in the planets.txt file, but if sed_name is something else,
+        we advice to use a separate pdir folder for this.
+    fraction_hydrogen : float or None
+        Hydrogen abundance expressed as a fraction of the total. If a value is given,
+        Parker wind profiles will be calculated using p-winds standalone with a H/He
+        composition.
     z : float
         Metallicity (=scale factor relative to solar for all elements except H
         and He). Using this keyword results in running p_winds in an iterative
@@ -769,8 +794,37 @@ def run(
     zelem : dict
         Abundance scale factor for specific elements, e.g. {"Fe": 10, "He": 0.01}.
         Can also be used to toggle elements off, e.g. {"Ca": 0}.
-        Combines with "z" keyword. Using this results in running p_winds
-        in an iterative scheme where Cloudy updates the mu parameter.
+        Combines with "z" keyword. Beware that this is multiplicative!
+        Using this results in running p_winds in an iterative scheme where Cloudy
+        updates the mu parameter.
+    mu_conv : float
+        Convergence threshold expressed as the relative change in mu_bar
+        between iterations.  Will only be used if fraction_hydrogen is None, in
+        which case the p-winds/Cloudy iterative method is applied.
+    mu_maxit : int
+        Maximum number of iterations for the p-winds/Cloudy iterative method. Will only
+        be used if fraction_hydrogen is None.
+    overwrite : bool
+        Whether to overwrite existing models.
+    verbose : bool
+        Whether to print diagnostics about the convergence of mu_bar.
+    avoid_pwinds_mubar : bool
+        Whether to avoid using p-winds to calculate mu_bar during the first iteration,
+        when using the p-winds/Cloudy iterative method. Will only be used if
+        fraction_hydrogen is None.
+        If True, we guess the mu_bar of the first iteration based on a
+        completely neutral atmosphere. This can be helpful in cases where
+        p-winds solver cannot find a solution, but Cloudy typically can.
+    no_tidal : bool
+        Whether to neglect tidal gravity - fourth term of Eq. 4 of Linssen et
+        al. (2024).  See also Appendix D of Vissapragada et al. (2022) for the
+        p-winds implementation.
+    cores : int
+        Number of parallel processes to spawn (i.e., number of CPU cores).
+        Note that on most platforms the multiprocessing method uses 'spawn', 
+        and this generally requires the run() call to be in a main block:
+            if __name__ == '__main__':
+                ...
     """
     if mdot is None:
         mdot = []
@@ -780,6 +834,11 @@ def run(
         temp = []
     elif isinstance(temp, (int, float)):
         temp = [temp]
+    
+    if (fraction_hydrogen is None) == (z is None):
+        raise ValueError("Exactly one of `fraction_hydrogen` or `z` must be given to " \
+                         "specify the atmospheric composition, not both and not neither.")
+    # if fraction_hydrogen is given, the following zdict will simply not be used by run_s()
     zdict = tools.get_zdict(z=z, zelem=zelem)
 
     pars = []
@@ -798,10 +857,17 @@ def run(
                     mu_maxit,
                     overwrite,
                     verbose,
+                    avoid_pwinds_mubar,
                     no_tidal,
                 )
             )
 
+    # don't use a pool for a single core
+    if int(cores) <= 1:
+        for args in pars:
+            catch_errors_run_s(*args)
+        return
+    
     with multiprocessing.Pool(cores) as p:
         p.starmap(catch_errors_run_s, pars)
         p.close()
@@ -820,6 +886,7 @@ def run_s(
     mu_maxit,
     overwrite,
     verbose,
+    avoid_pwinds_mubar,
     no_tidal,
 ):
     """
@@ -866,6 +933,11 @@ def run_s(
         Whether to overwrite existing models.
     verbose : bool
         Whether to print diagnostics about the convergence of mu_bar.
+    avoid_pwinds_mubar : bool
+        Whether to avoid using p-winds to calculate mu_bar during the first
+        iteration.  If True, we guess the mu_bar of the first iteration based
+        on a completely neutral atmosphere. This can be helpful in cases where
+        p-winds solver cannot find a solution, but Cloudy typically can.
     no_tidal : bool
         Whether to neglect tidal gravity - fourth term of Eq. 4 of Linssen et
         al. (2024).  See also Appendix D of Vissapragada et al. (2022) for the
@@ -948,7 +1020,7 @@ def run_g(
 ):
     """
     Calculates a grid of isothermal Parker wind models, by executing the
-    run() function in parallel.
+    run_s() function in parallel.
 
     Parameters
     ----------
@@ -1038,7 +1110,7 @@ def run_g(
             )
 
     with multiprocessing.Pool(cores) as p:
-        p.starmap(catch_errors_run, pars)
+        p.starmap(catch_errors_run_s, pars)
         p.close()
         p.join()
 
@@ -1163,6 +1235,7 @@ def new_argument_parser():
     composition_group.add_argument(
         "-z",
         "--metallicity",
+        dest="z",
         type=float,
         help=(
             "metallicity (=scale factor relative to solar for all elements except H "
@@ -1238,11 +1311,6 @@ def main(**kwargs):
     else:
         args = kwargs
 
-    if args.z is not None:
-        zdict = tools.get_zdict(z=args.z, zelem=args.zelem)
-    else:  # if z==None we should not pass that to the tools.get_zdict function
-        zdict = tools.get_zdict(zelem=args.zelem)
-
     if args.fraction_hydrogen is not None and (
         args.zelem != {}
         or args.mu_conv != 0.01
@@ -1287,21 +1355,22 @@ def main(**kwargs):
         1 + (args.temp_upper - args.temp_lower) // args.temp_step
     )
 
-    run_models(
-        args.plname,
-        args.pdir,
-        args.cores,
-        mdot,
-        temp,
-        args.sed_name,
-        args.fraction_hydrogen,
-        zdict,
-        args.mu_conv,
-        args.mu_maxit,
-        args.overwrite,
-        args.verbose,
-        args.avoid_pwinds_mubar,
-        args.no_tidal,
+    run(
+        plname=args.plname,
+        pdir=args.pdir,
+        mdot=mdot,
+        temp=temp,
+        sed_name=args.sed_name,
+        fraction_hydrogen=args.fraction_hydrogen,
+        z=args.z,
+        zelem=args.zelem,
+        mu_conv=args.mu_conv,
+        mu_maxit=args.mu_maxit,
+        overwrite=args.overwrite,
+        verbose=args.verbose,
+        avoid_pwinds_mubar=args.avoid_pwinds_mubar,
+        no_tidal=args.no_tidal,
+        cores=args.cores,
     )
 
     print(
